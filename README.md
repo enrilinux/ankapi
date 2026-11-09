@@ -76,4 +76,6 @@ Install the APK matching your device's CPU architecture. Do not install both var
 
 ## License
 
-No open-source license has been selected for this project yet. Until a license is added, assume all rights are reserved.
+Ankapi is distributed under the [MIT License](LICENSE). You may use, modify, and redistribute it, including in commercial projects, provided the copyright and license notice are retained.
+
+This license applies to Ankapi's own code. Flutter and third-party dependencies remain under their respective licenses. Ankapi is an independent client for Gokapi and is not affiliated with the Gokapi project.
