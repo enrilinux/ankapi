@@ -100,6 +100,17 @@ class AppStrings {
       'setConfigFirst': 'Set the URL and API key first.',
       'uploadSuccess': 'Upload successful',
       'uploadFailed': 'Upload failed',
+      'uploadOptions': 'Upload options',
+      'downloadLimit': 'Download limit',
+      'unlimitedDownloads': 'Unlimited downloads',
+      'expirationDate': 'Expiration date',
+      'neverExpires': 'Never expires',
+      'passwordProtection': 'Password protection',
+      'optionalPassword': 'Optional password',
+      'chooseDate': 'Choose date',
+      'invalidDownloadLimit': 'Enter a download limit greater than zero.',
+      'cancel': 'Cancel',
+      'continue': 'Continue',
       'networkError': 'Network error',
       'deleteSuccess': 'File deleted',
       'deleteFailed': 'Delete failed',
@@ -128,6 +139,18 @@ class AppStrings {
       'setConfigFirst': 'Configura prima URL e API key.',
       'uploadSuccess': 'Caricamento completato',
       'uploadFailed': 'Caricamento non riuscito',
+      'uploadOptions': 'Opzioni di caricamento',
+      'downloadLimit': 'Limite di download',
+      'unlimitedDownloads': 'Download illimitati',
+      'expirationDate': 'Data di scadenza',
+      'neverExpires': 'Non scade mai',
+      'passwordProtection': 'Protezione con password',
+      'optionalPassword': 'Password facoltativa',
+      'chooseDate': 'Scegli data',
+      'invalidDownloadLimit':
+          'Inserisci un limite di download maggiore di zero.',
+      'cancel': 'Annulla',
+      'continue': 'Continua',
       'networkError': 'Errore di rete',
       'deleteSuccess': 'File eliminato',
       'deleteFailed': 'Eliminazione non riuscita',
@@ -156,6 +179,18 @@ class AppStrings {
       'setConfigFirst': 'Configura primero la URL y la clave API.',
       'uploadSuccess': 'Carga completada',
       'uploadFailed': 'Error al cargar',
+      'uploadOptions': 'Opciones de carga',
+      'downloadLimit': 'Límite de descargas',
+      'unlimitedDownloads': 'Descargas ilimitadas',
+      'expirationDate': 'Fecha de caducidad',
+      'neverExpires': 'No caduca nunca',
+      'passwordProtection': 'Protección con contraseña',
+      'optionalPassword': 'Contraseña opcional',
+      'chooseDate': 'Elegir fecha',
+      'invalidDownloadLimit':
+          'Introduce un límite de descargas mayor que cero.',
+      'cancel': 'Cancelar',
+      'continue': 'Continuar',
       'networkError': 'Error de red',
       'deleteSuccess': 'Archivo eliminado',
       'deleteFailed': 'Error al eliminar',
@@ -184,6 +219,17 @@ class AppStrings {
       'setConfigFirst': 'Définissez d’abord l’URL et la clé API.',
       'uploadSuccess': 'Envoi réussi',
       'uploadFailed': 'Échec de l’envoi',
+      'uploadOptions': 'Options d’envoi',
+      'downloadLimit': 'Limite de téléchargements',
+      'unlimitedDownloads': 'Téléchargements illimités',
+      'expirationDate': 'Date d’expiration',
+      'neverExpires': 'N’expire jamais',
+      'passwordProtection': 'Protection par mot de passe',
+      'optionalPassword': 'Mot de passe facultatif',
+      'chooseDate': 'Choisir une date',
+      'invalidDownloadLimit': 'Saisissez une limite supérieure à zéro.',
+      'cancel': 'Annuler',
+      'continue': 'Continuer',
       'networkError': 'Erreur réseau',
       'deleteSuccess': 'Fichier supprimé',
       'deleteFailed': 'Échec de la suppression',
@@ -212,6 +258,17 @@ class AppStrings {
       'setConfigFirst': 'Bitte zuerst URL und API-Schlüssel festlegen.',
       'uploadSuccess': 'Upload erfolgreich',
       'uploadFailed': 'Upload fehlgeschlagen',
+      'uploadOptions': 'Upload-Optionen',
+      'downloadLimit': 'Download-Limit',
+      'unlimitedDownloads': 'Unbegrenzte Downloads',
+      'expirationDate': 'Ablaufdatum',
+      'neverExpires': 'Läuft nie ab',
+      'passwordProtection': 'Passwortschutz',
+      'optionalPassword': 'Optionales Passwort',
+      'chooseDate': 'Datum auswählen',
+      'invalidDownloadLimit': 'Gib ein Download-Limit größer als null ein.',
+      'cancel': 'Abbrechen',
+      'continue': 'Weiter',
       'networkError': 'Netzwerkfehler',
       'deleteSuccess': 'Datei gelöscht',
       'deleteFailed': 'Löschen fehlgeschlagen',
@@ -413,6 +470,12 @@ class _GokapiHomePageState extends State<GokapiHomePage> {
     }
 
     try {
+      final options = await showDialog<UploadOptions>(
+        context: context,
+        builder: (_) => UploadOptionsDialog(language: _language),
+      );
+      if (options == null) return;
+
       debugPrint('Upload: opening the Android file picker.');
       final file = await FilePicker.pickFile();
       if (file == null) {
@@ -427,8 +490,12 @@ class _GokapiHomePageState extends State<GokapiHomePage> {
         Uri.parse('$_baseUrl/api/files/add'),
       );
       request.headers['apikey'] = _apiKey;
-      request.fields['allowedDownloads'] = '5';
-      request.fields['expiryDays'] = '7';
+      request.fields['allowedDownloads'] =
+          (options.downloadLimit ?? 0).toString();
+      request.fields['expiryDays'] = (options.expiryDays ?? 0).toString();
+      if (options.password.isNotEmpty) {
+        request.fields['password'] = options.password;
+      }
 
       final fileLength = await file.length();
       debugPrint('Upload: file length is ${fileLength ?? 'unknown'} bytes.');
@@ -585,6 +652,179 @@ class _GokapiHomePageState extends State<GokapiHomePage> {
               child: const Icon(Icons.upload_file),
             )
           : null,
+    );
+  }
+}
+
+class UploadOptions {
+  final int? downloadLimit;
+  final int? expiryDays;
+  final String password;
+
+  const UploadOptions({
+    required this.downloadLimit,
+    required this.expiryDays,
+    required this.password,
+  });
+}
+
+class UploadOptionsDialog extends StatefulWidget {
+  final String language;
+
+  const UploadOptionsDialog({super.key, required this.language});
+
+  @override
+  State<UploadOptionsDialog> createState() => _UploadOptionsDialogState();
+}
+
+class _UploadOptionsDialogState extends State<UploadOptionsDialog> {
+  late final TextEditingController _downloadLimitController;
+  late final TextEditingController _passwordController;
+  late final TextEditingController _expiryDateController;
+  late DateTime _expiryDate;
+  bool _unlimitedDownloads = false;
+  bool _neverExpires = false;
+
+  String _text(String key) => AppStrings.text(key, widget.language);
+
+  @override
+  void initState() {
+    super.initState();
+    _downloadLimitController = TextEditingController(text: '5');
+    _passwordController = TextEditingController();
+    _expiryDate =
+        DateUtils.dateOnly(DateTime.now().add(const Duration(days: 7)));
+    _expiryDateController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateExpiryDateText();
+  }
+
+  @override
+  void dispose() {
+    _downloadLimitController.dispose();
+    _passwordController.dispose();
+    _expiryDateController.dispose();
+    super.dispose();
+  }
+
+  void _updateExpiryDateText() {
+    _expiryDateController.text = MaterialLocalizations.of(
+      context,
+    ).formatMediumDate(_expiryDate);
+  }
+
+  Future<void> _selectExpiryDate() async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _expiryDate.isAfter(today)
+          ? _expiryDate
+          : today.add(const Duration(days: 1)),
+      firstDate: today.add(const Duration(days: 1)),
+      lastDate: DateTime(today.year + 20),
+    );
+    if (selectedDate == null || !mounted) return;
+    setState(() {
+      _expiryDate = DateUtils.dateOnly(selectedDate);
+      _updateExpiryDateText();
+    });
+  }
+
+  void _submit() {
+    final limit = int.tryParse(_downloadLimitController.text.trim());
+    if (!_unlimitedDownloads && (limit == null || limit < 1)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_text('invalidDownloadLimit'))),
+      );
+      return;
+    }
+
+    final today = DateUtils.dateOnly(DateTime.now());
+    final expiryDays = _neverExpires
+        ? null
+        : DateTime.utc(_expiryDate.year, _expiryDate.month, _expiryDate.day)
+            .difference(DateTime.utc(today.year, today.month, today.day))
+            .inDays;
+    Navigator.of(context).pop(
+      UploadOptions(
+        downloadLimit: _unlimitedDownloads ? null : limit,
+        expiryDays: expiryDays,
+        password: _passwordController.text,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_text('uploadOptions')),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!_unlimitedDownloads) ...[
+              TextField(
+                controller: _downloadLimitController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: _text('downloadLimit'),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(_text('unlimitedDownloads')),
+              value: _unlimitedDownloads,
+              onChanged: (value) => setState(() => _unlimitedDownloads = value),
+            ),
+            if (!_neverExpires) ...[
+              TextField(
+                controller: _expiryDateController,
+                readOnly: true,
+                onTap: _selectExpiryDate,
+                decoration: InputDecoration(
+                  labelText: _text('expirationDate'),
+                  suffixIcon: IconButton(
+                    onPressed: _selectExpiryDate,
+                    icon: const Icon(Icons.calendar_today),
+                    tooltip: _text('chooseDate'),
+                  ),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(_text('neverExpires')),
+              value: _neverExpires,
+              onChanged: (value) => setState(() => _neverExpires = value),
+            ),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              autofillHints: const [AutofillHints.newPassword],
+              decoration: InputDecoration(
+                labelText: _text('passwordProtection'),
+                hintText: _text('optionalPassword'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(_text('cancel')),
+        ),
+        FilledButton(onPressed: _submit, child: Text(_text('continue'))),
+      ],
     );
   }
 }

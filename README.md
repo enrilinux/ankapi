@@ -8,7 +8,7 @@ Ankapi lets you connect to a Gokapi server, browse its files, and upload or dele
 
 - First-run setup for the Gokapi server URL and API key; both remain editable in Settings.
 - Browse uploaded files and see their IDs and remaining downloads.
-- Upload files using Android's system file picker and delete files from the server.
+- Upload files with a configurable download limit, expiration date, and optional password using Android's system file picker; delete files from the server.
 - Choose **System**, **Light**, or **Dark** appearance.
 - Choose **Normal** Material styling or **Material You** with Android dynamic colors when available.
 - Interface languages: English (default), Italian, Spanish, French, and German.
@@ -65,6 +65,8 @@ The outputs are:
 - `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` — 64-bit ARM
 
 Install the APK matching your device's CPU architecture. Do not install both variants over one another as separate app instances; they use the same application ID.
+
+Prebuilt APKs are published on the [GitHub Releases page](https://github.com/enrilinux/ankapi/releases/latest) with architecture-specific filenames.
 
 ## Project details
 
