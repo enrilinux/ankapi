@@ -9,6 +9,7 @@ Ankapi lets you connect to a Gokapi server, browse its files, and upload or dele
 - First-run setup for the Gokapi server URL and API key; both remain editable in Settings.
 - Browse uploaded files and see their IDs and remaining downloads.
 - Upload files with a configurable download limit, expiration date, and optional password using Android's system file picker; delete files from the server.
+- Download files from the Gokapi instance, including files uploaded by other clients. Downloads use the available download allowance. End-to-end encrypted files are not currently supported.
 - Choose **System**, **Light**, or **Dark** appearance.
 - Choose **Normal** Material styling or **Material You** with Android dynamic colors when available.
 - Interface languages: English (default), Italian, Spanish, French, and German.
