@@ -4,6 +4,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseSigningPassword = System.getenv("GOKAPI_SIGNING_PASSWORD")
+
 android {
     namespace = "org.enrilinux.ankapi"
     compileSdk = 36
@@ -30,19 +32,21 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            val signingPassword = System.getenv("GOKAPI_SIGNING_PASSWORD") ?: ""
-
-            storeFile = rootProject.file("app/gokapi-release.jks")
-            storePassword = signingPassword
-            keyAlias = "gokapi-release"
-            keyPassword = signingPassword
+        if (!releaseSigningPassword.isNullOrBlank()) {
+            create("release") {
+                storeFile = file("gokapi-release.jks")
+                storePassword = releaseSigningPassword
+                keyAlias = "gokapi-release"
+                keyPassword = releaseSigningPassword
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (!releaseSigningPassword.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

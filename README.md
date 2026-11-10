@@ -17,14 +17,14 @@ Ankapi lets you connect to a Gokapi server, browse its files, and upload or dele
 ## Requirements
 
 - Android 7.0 (API 24) or later.
-- A reachable Gokapi instance and an API key with the required permissions (at least **VIEW**, **UPLOAD**, and **DELETE** for all current features).
+- A reachable Gokapi instance and an API key with the required permissions (at least **VIEW**, **UPLOAD**, **DOWNLOAD**, and **DELETE** for all current features).
 - For development: Flutter SDK, Android SDK Platform 36, and Java 17 or newer.
 
 ## Get started
 
 1. Install Ankapi and open it.
 2. Enter your Gokapi server URL and API key, then choose your language and appearance.
-3. Use the refresh button to reload the file list, the upload button to send a file, or the delete icon to remove one.
+3. Use the refresh button to reload the file list, the upload button to send a file, the download icon to save a file from the server, or the delete icon to remove one.
 
 Use HTTPS for the server URL whenever possible. Ankapi stores its connection settings, including the API key, in the app's local preferences. Keep your device protected and do not share your API key.
 

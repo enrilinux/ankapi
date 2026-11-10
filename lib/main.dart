@@ -117,6 +117,12 @@ class AppStrings {
       'loadFailed': 'Failed to load files',
       'unknownFile': 'Unknown',
       'downloadsLeft': 'Downloads left',
+      'download': 'Download',
+      'downloadSuccess': 'File saved',
+      'downloadFailed': 'Could not download file',
+      'downloadPermissionRequired': 'The API key needs DOWNLOAD permission.',
+      'downloadUnsupportedEncryption':
+          'End-to-end encrypted files are not supported.',
       'settingsTitle': 'Ankapi settings',
       'language': 'Language',
       'themeMode': 'Appearance',
@@ -157,6 +163,13 @@ class AppStrings {
       'loadFailed': 'Impossibile caricare i file',
       'unknownFile': 'Sconosciuto',
       'downloadsLeft': 'Download rimasti',
+      'download': 'Scarica',
+      'downloadSuccess': 'File salvato',
+      'downloadFailed': 'Impossibile scaricare il file',
+      'downloadPermissionRequired':
+          'La chiave API deve avere il permesso DOWNLOAD.',
+      'downloadUnsupportedEncryption':
+          'I file con cifratura end-to-end non sono supportati.',
       'settingsTitle': 'Impostazioni Ankapi',
       'language': 'Lingua',
       'themeMode': 'Aspetto',
@@ -197,6 +210,13 @@ class AppStrings {
       'loadFailed': 'No se pudieron cargar los archivos',
       'unknownFile': 'Desconocido',
       'downloadsLeft': 'Descargas restantes',
+      'download': 'Descargar',
+      'downloadSuccess': 'Archivo guardado',
+      'downloadFailed': 'No se pudo descargar el archivo',
+      'downloadPermissionRequired':
+          'La clave API necesita el permiso DOWNLOAD.',
+      'downloadUnsupportedEncryption':
+          'No se admiten archivos cifrados de extremo a extremo.',
       'settingsTitle': 'Configuración de Ankapi',
       'language': 'Idioma',
       'themeMode': 'Apariencia',
@@ -236,6 +256,13 @@ class AppStrings {
       'loadFailed': 'Impossible de charger les fichiers',
       'unknownFile': 'Inconnu',
       'downloadsLeft': 'Téléchargements restants',
+      'download': 'Télécharger',
+      'downloadSuccess': 'Fichier enregistré',
+      'downloadFailed': 'Impossible de télécharger le fichier',
+      'downloadPermissionRequired':
+          'La clé API doit disposer de la permission DOWNLOAD.',
+      'downloadUnsupportedEncryption':
+          'Les fichiers chiffrés de bout en bout ne sont pas pris en charge.',
       'settingsTitle': 'Paramètres Ankapi',
       'language': 'Langue',
       'themeMode': 'Apparence',
@@ -275,6 +302,13 @@ class AppStrings {
       'loadFailed': 'Dateien konnten nicht geladen werden',
       'unknownFile': 'Unbekannt',
       'downloadsLeft': 'Verbleibende Downloads',
+      'download': 'Herunterladen',
+      'downloadSuccess': 'Datei gespeichert',
+      'downloadFailed': 'Datei konnte nicht heruntergeladen werden',
+      'downloadPermissionRequired':
+          'Der API-Schlüssel benötigt die Berechtigung DOWNLOAD.',
+      'downloadUnsupportedEncryption':
+          'Ende-zu-Ende-verschlüsselte Dateien werden nicht unterstützt.',
       'settingsTitle': 'Ankapi-Einstellungen',
       'language': 'Sprache',
       'themeMode': 'Darstellung',
@@ -367,6 +401,7 @@ class GokapiHomePage extends StatefulWidget {
 class _GokapiHomePageState extends State<GokapiHomePage> {
   List<dynamic> _files = [];
   bool _isLoading = false;
+  String? _downloadingFileId;
   bool _isCheckingConfig = true;
   String _baseUrl = '';
   String _apiKey = '';
@@ -561,6 +596,52 @@ class _GokapiHomePageState extends State<GokapiHomePage> {
     }
   }
 
+  Future<void> _downloadFile(
+    String id,
+    String name,
+    Map<String, dynamic> file,
+  ) async {
+    if (!_hasConfig || id == 'N/A') return;
+    if (file['RequiresClientSideDecryption'] == true ||
+        file['IsEndToEndEncrypted'] == true) {
+      _showError(_text('downloadUnsupportedEncryption'));
+      return;
+    }
+
+    setState(() => _downloadingFileId = id);
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/files/download/${Uri.encodeComponent(id)}'),
+        headers: {
+          'apikey': _apiKey,
+          'accept': '*/*',
+          'increaseCounter': 'true',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        _showError(
+          response.statusCode == 401 || response.statusCode == 403
+              ? _text('downloadPermissionRequired')
+              : '${_text('downloadFailed')}: ${response.statusCode}',
+        );
+        return;
+      }
+
+      final savedFile = await FilePicker.saveFile(
+        fileName: name,
+        bytes: response.bodyBytes,
+        mimeType:
+            response.headers['content-type'] ?? 'application/octet-stream',
+      );
+      if (savedFile != null) _showSuccess(_text('downloadSuccess'));
+    } catch (error) {
+      _showError('${_text('downloadFailed')}: $error');
+    } finally {
+      if (mounted) setState(() => _downloadingFileId = null);
+    }
+  }
+
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -622,9 +703,10 @@ class _GokapiHomePageState extends State<GokapiHomePage> {
                       itemCount: _files.length,
                       itemBuilder: (context, index) {
                         final file = _files[index];
-                        final fileName = file['Name'] ??
-                            file['name'] ??
-                            _text('unknownFile');
+                        final fileName = (file['Name'] ??
+                                file['name'] ??
+                                _text('unknownFile'))
+                            .toString();
                         final fileId = file['Id']?.toString() ??
                             file['id']?.toString() ??
                             'N/A';
@@ -639,9 +721,33 @@ class _GokapiHomePageState extends State<GokapiHomePage> {
                           subtitle: Text(
                             'ID: $fileId | ${_text('downloadsLeft')}: $downloadsLeft',
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteFile(fileId),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_downloadingFileId == fileId)
+                                const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              else
+                                IconButton(
+                                  tooltip: _text('download'),
+                                  icon: const Icon(Icons.download),
+                                  onPressed: () => _downloadFile(
+                                    fileId,
+                                    fileName,
+                                    Map<String, dynamic>.from(file),
+                                  ),
+                                ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteFile(fileId),
+                              ),
+                            ],
                           ),
                         );
                       },

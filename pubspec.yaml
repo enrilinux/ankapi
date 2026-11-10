@@ -1,7 +1,7 @@
 name: ankapi
 description: A Flutter app to manage a Gokapi instance.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.3.0
